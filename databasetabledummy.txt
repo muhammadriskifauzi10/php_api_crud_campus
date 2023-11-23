@@ -1,0 +1,11 @@
+CREATE DATABASE db_api_crud_campus;
+
+CREATE TABLE students (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255),
+    gender ENUM('Laki-Laki', 'Perempuan'),
+    major ENUM('Teknik Informatika', 'Teknik Komputer'),
+    address TEXT,
+    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

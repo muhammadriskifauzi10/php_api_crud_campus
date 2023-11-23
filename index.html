@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crud API</title>
+    <style>
+        label {
+            display: block;
+        }
+        span {
+            color: red;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h3>Kelola Data Mahasiswa</h3>
+    <form id="form" autocomplete="off" data-event="tambah">
+        <input type="hidden" name="id" id="id">
+        <div>
+            <label for="name">Nama</label>
+            <input type="text" name="name" id="name">
+            <span></span>
+        </div>
+        <div>
+            <label for="gender">Jenis Kelamin</label>
+            <select name="gender" id="gender">
+                <option value="Laki-Laki">Laki-Laki</option>
+                <option value="Perempuan">Perempuan</option>
+            </select>
+            <span></span>
+        </div>
+        <div>
+            <label for="major">Jurusan</label>
+            <select name="major" id="major">
+                <option value="Teknik Informatika">Teknik Informatika</option>
+                <option value="Teknik Komputer">Teknik Komputer</option>
+                <option value="Desain Komunikasi Visual">Desain Komunikasi Visual</option>
+            </select>
+            <span></span>
+        </div>
+        <div>
+            <label for="address">Alamat</label>
+            <textarea name="address" id="address"></textarea>
+            <span></span>
+        </div>
+        <div id="parent-btn">
+            <button type="submit">Simpan</button>
+        </div>
+    </form>
+    <table>
+        <thead>
+            <th>No</th>
+            <th>Nama</th>
+            <th>Jenis Kelamin</th>
+            <th>Jurusan</th>
+            <th>Alamat</th>
+            <th>Aksi</th>
+        </thead>
+        <tbody id="data">
+        </tbody>
+    </table>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+        // Pemanggilan Load Data
+        loadData()
+
+        $(document).ready(function() {
+            // Form Post Data dan Edit Data
+            $("#form").on('submit', function(e) {
+                e.preventDefault()
+                let dataEvent = $("#form").attr('data-event')
+                let error = 0
+
+                let id = $("#id").val()
+                let name = $("#name").val()
+                let gender = $("#gender").val()
+                let major = $("#major").val()
+                let address = $("#address").val()
+
+                // Validasi
+                if(name.length === 0) {
+                    error++
+                    $("#name").next().text('Nama wajib diisi')
+                }
+                else {
+                    $("#name").next().text("")
+                }
+
+                if(gender.length === 0) {
+                    error++
+                    $("#gender").next().text("Jenis kelamin wajib ditentukan")
+                }
+                else {
+                    $("#gender").next().text("")
+                }
+
+                if(major.length === 0) {
+                    error++
+                    $("#major").next().text('Jurusan wajib diisi')
+                }
+                else {
+                    $("#major").next().text("")
+                }
+
+                if(address.length === 0) {
+                    error++
+                    $("#address").next().text('Alamat wajib diisi')
+                }
+                else {
+                    $("#address").next().text("")
+                }
+
+                if(error === 0) {
+                    // Tambah Data
+                    if(dataEvent === "tambah") {
+                        const formData = {
+                            name: name,
+                            gender: gender,
+                            major: major,
+                            address: address,
+                        }
+
+                        fetch('http://localhost/php_api_crud_campus/index.php', {
+                            method: 'POST',
+                            body: JSON.stringify(formData),
+                            headers: {
+                                'Content-type': 'application/json; charset=UTF-8',
+                            },
+                        })
+                        .then(response => response.json())
+                        .then(json => {
+                            if(json.status === 201) {
+                                $("#name").val("")
+                                $("#gender").val("Laki-Laki")
+                                $("#major").val("Teknik Informatika")
+                                $("#address").val("")
+                                loadData()
+                            }
+                        });
+                    }
+
+                    // Edit Data
+                    if(dataEvent === "edit") {
+                        const formData = {
+                            id: id,
+                            name: name,
+                            gender: gender,
+                            major: major,
+                            address: address,
+                        }
+    
+                        fetch('http://localhost/php_api_crud_campus/index.php', {
+                            method: 'PUT',
+                            body: JSON.stringify(formData),
+                            headers: {
+                                'Content-type': 'application/json; charset=UTF-8',
+                            },
+                        })
+                        .then(response => response.json())
+                        .then(json => {
+                            if(json.status === 200) {
+                                clearForm()
+                                loadData()
+                            }
+                        });
+                    }
+                }
+            })
+        })
+
+        // Functiom Load Data
+        function loadData(id = null) {
+            if(id == null) {
+                // Get Semua Data
+                fetch('http://localhost/php_api_crud_campus/index.php')
+                .then(response => response.json())
+                .then(json => {
+                    if(json.status === 200) {
+                        $("#data").empty()
+                        if(json.data.length > 0) {      
+                            json.data.map((value, index) => {
+                                $("#data").append(`
+                                <tr>
+                                    <td>` + (index+1) + `</td>
+                                    <td>` + value.name + `</td>
+                                    <td>` + value.gender+ `</td>
+                                    <td>` + value.major+ `</td>
+                                    <td>` + value.address+ `</td>
+                                    <td>
+                                        <button type="button" onclick="editData(` + value.id + `)">Edit</button>
+                                        <button type="button" onclick="deleteData(` + value.id + `)">Hapus</button
+                                    </td>
+                                </tr>
+                                `)
+                            })
+                        }
+                        else {
+                            $("#data").append(`
+                            <tr>
+                                <td colspan="6" style="text-align: center;">Data Kosong</td>
+                            </tr>
+                            `)
+                        }
+                    }
+                })
+            }
+            else {
+                // Filter Data
+                fetch(`http://localhost/php_api_crud_campus/index.php/${id}`)
+                .then(response => response.json())
+                .then(json => {
+                    if(json.status === 200) {
+                        $("#form").removeAttr("data-event")
+                        $("#form").attr("data-event", "edit")
+
+                        const data = json.data[0]
+
+                        $("#id").val(data.id)
+
+                        $("#name").val(data.name)
+                        $("#name").next().text("")
+
+                        $("#gender").val(data.gender)
+                        $("#gender").next().text("")
+
+                        $("#major").val(data.major)
+                        $("#major").next().text("")
+
+                        $("#address").val(data.address)
+                        $("#address").next().text("")
+
+                        $("#parent-btn").empty()
+                        $("#parent-btn").prepend(`
+                            <button type="button" onclick="clearForm()">Bersihkan</button>
+                            <button type="submit">Simpan</button>
+                        `)
+                        $("button[type='submit']").text("Perbarui")
+                    }
+                })
+            }
+        }
+
+        // Function Memulai Edit Data
+        function editData(id) {
+            loadData(id)
+        }
+
+
+        // Function Bersihkan Data Edit
+        function clearForm() {
+            $("#form").attr("data-event", "tambah")
+            $("#id").val("")
+
+            $("#name").val("")
+            $("#name").next().text("")
+
+            $("#gender").val("Laki-Laki")
+            $("#gender").next().text("")
+
+            $("#major").val("Teknik Informatika")
+            $("#major").next().text("")
+
+            $("#address").val("")
+            $("#address").next().text("")
+
+            $("#parent-btn").empty()
+            $("#parent-btn").append(`
+                <button type="submit">Simpan</button>
+            `)
+        }
+
+        // Function Delete Data
+        function deleteData(id) {
+            fetch(`http://localhost/php_api_crud_campus/index.php/${id}`, {
+                method: 'DELETE',
+            })
+            .then(response => response.json())
+            .then(json => {
+                if(json.status === 200) {
+                    loadData()
+                }
+            });
+        }
+    </script>
+</body>
+</html>
